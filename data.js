@@ -37,7 +37,7 @@ const WALLETS_CONFIG = {
         dotClass: 'bg-blue-400',
         deposits: [
             { date: '2026-11-16', amount: 550.00 },
-            { date: '2026-11-16', amount: 575.00 }
+            { date: '2026-11-17', amount: 575.00 }
         ],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
