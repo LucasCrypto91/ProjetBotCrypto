@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHADESK // Wallets — Lucas, Raphael & Matteo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        bg: '#090b0f',
+                        surface: '#11151c',
+                        surfaceHover: '#171c26',
+                        border: '#1f2633',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090b0f;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #090b0f; }
+        ::-webkit-scrollbar-thumb { background: #1f2633; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2d3748; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200">
+
+    <header class="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center font-mono font-bold text-white shadow-lg shadow-blue-500/20">
+                    AD
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold tracking-tight text-white text-base">ALPHADESK</span>
+                        <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            3 WALLETS
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Suivi des Performances Individuelles • Lucas, Raphael & Matteo</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1 bg-bg p-1 rounded-lg border border-border text-xs">
+                <button onclick="setTimeframe('daily')" id="tf-daily" class="tf-btn px-3 py-1.5 rounded-md bg-blue-600 text-white font-medium transition">Daily</button>
+                <button onclick="setTimeframe('weekly')" id="tf-weekly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Weekly</button>
+                <button onclick="setTimeframe('monthly')" id="tf-monthly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Monthly</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div id="wallets-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <footer class="border-t border-border py-4 px-4 sm:px-6 text-center text-xs text-slate-500">
+        ALPHADESK TERMINAL • Wallets Indépendants • Lucas, Raphael & Matteo
+    </footer>
+
+    <!-- Chargement des données puis du moteur -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
