@@ -36,7 +36,8 @@ const WALLETS_CONFIG = {
         badgeClass: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
         dotClass: 'bg-blue-400',
         deposits: [
-            { date: '2026-11-16', amount: 500.00 }
+            { date: '2026-11-16', amount: 550.00 },
+            { date: '2026-11-16', amount: 575.00 }
         ],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
@@ -58,7 +59,7 @@ const WALLETS_CONFIG = {
         badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
         dotClass: 'bg-emerald-400',
         deposits: [
-            { date: '2026-11-16', amount: 500.00 }
+            { date: '2026-11-16', amount: 550.00 }
         ],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
