@@ -12,7 +12,8 @@ const WALLETS_CONFIG = {
         // Ajoute tes dépôts ici (ajoute au capital sans fausser le PnL de trading)
         deposits: [
             { date: '2026-11-12', amount: 5000.00 },
-            { date: '2026-11-17', amount: 50000.00 }
+            { date: '2026-11-17', amount: 50000.00 },
+            { date: '2026-11-18', amount: 10350.00 }
 
         ],
         // Ajoute tes gains/pertes de trading ici
@@ -59,7 +60,8 @@ const WALLETS_CONFIG = {
         badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
         dotClass: 'bg-emerald-400',
         deposits: [
-            { date: '2026-11-16', amount: 550.00 }
+            { date: '2026-11-16', amount: 550.00 },
+            { date: '2026-11-18', amount: 575.00 }
         ],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
