@@ -59,7 +59,7 @@
                         <span class="font-bold tracking-tight text-white text-base">CRYPTO WALLETS</span>
                         <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            3 WALLETS
+                            TRADING & DCA
                         </span>
                     </div>
                     <p class="text-xs text-slate-400 hidden sm:block">Lucas, Raphael & Matteo</p>
@@ -74,15 +74,55 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div id="wallets-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-12">
+        <!-- Section 0 : Portefeuille Total Individuel (Trading + Projet DCA) -->
+        <section>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Portefeuille Total Individuel (Trading + Projet DCA)</h2>
+                <span class="text-xs text-slate-500">Cumul des 2 wallets par personne</span>
+            </div>
+            <div id="global-wallets-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- Section 1 : Wallets Trading -->
+        <section class="pt-8 border-t border-border">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Wallets Trading</h2>
+                <span class="text-xs text-slate-500">Portefeuille n°1</span>
+            </div>
+            <div id="wallets-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+        <!-- Section 2 : Projet DCA -->
+        <section class="pt-8 border-t border-border">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Projet DCA</h2>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                        +60% / MOIS + 1K / 2 SEM.
+                    </span>
+                </div>
+                <span class="text-xs text-slate-500">Portefeuille n°2 & prévision composée</span>
+            </div>
+            <div id="dca-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6"></div>
+        </section>
     </main>
 
     <footer class="border-t border-border py-4 px-4 sm:px-6 text-center text-xs text-slate-500">
         Lucas, Raphael & Matteo
     </footer>
 
-    <script src="data.js"></script>
-    <script src="app.js"></script>
+    <!-- Anti-cache automatique -->
+    <script>
+        const ts = Date.now();
+        const s1 = document.createElement('script');
+        s1.src = 'data.js?v=' + ts;
+        s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'app.js?v=' + ts;
+            document.body.appendChild(s2);
+        };
+        document.body.appendChild(s1);
+    </script>
 </body>
 </html>
