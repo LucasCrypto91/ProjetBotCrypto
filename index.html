@@ -82,11 +82,11 @@
         </div>
 
         <!-- Live Market Ticker Bar (BTC, ETH, SOL in USD + Fear & Greed) -->
-        <div class="border-t border-border/80 bg-bg/95">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 text-xs mono">
-                <div class="flex flex-wrap items-center gap-4 sm:gap-6">
-                    <!-- BTC -->
-                    <div class="flex items-center gap-2">
+        <div class="border-t border-border bg-bg/95">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-y-2.5 gap-x-4 text-xs mono">
+                <div class="flex flex-wrap items-center gap-y-2 gap-x-4 sm:gap-x-6">
+                    <!-- BTC (avec barre verticale devant comme ETH et SOL) -->
+                    <div class="flex items-center gap-2 border-l border-border pl-3 sm:pl-4">
                         <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                         <span class="font-semibold text-slate-300">BTC</span>
                         <span id="price-BTC" class="text-white font-bold">Chargement...</span>
@@ -94,7 +94,7 @@
                     </div>
 
                     <!-- ETH -->
-                    <div class="flex items-center gap-2 border-l border-border pl-4 sm:pl-6">
+                    <div class="flex items-center gap-2 border-l border-border pl-3 sm:pl-4">
                         <span class="w-2 h-2 rounded-full bg-blue-400"></span>
                         <span class="font-semibold text-slate-300">ETH</span>
                         <span id="price-ETH" class="text-white font-bold">Chargement...</span>
@@ -102,7 +102,7 @@
                     </div>
 
                     <!-- SOL -->
-                    <div class="flex items-center gap-2 border-l border-border pl-4 sm:pl-6">
+                    <div class="flex items-center gap-2 border-l border-border pl-3 sm:pl-4">
                         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                         <span class="font-semibold text-slate-300">SOL</span>
                         <span id="price-SOL" class="text-white font-bold">Chargement...</span>
@@ -111,12 +111,12 @@
                 </div>
 
                 <!-- Sentiment Marché (Fear & Greed) + Status -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-border/60">
                     <div id="fng-badge" class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-surface border border-border text-slate-400">
                         <span>Sentiment :</span>
                         <strong id="fng-value" class="text-slate-200">--</strong>
                     </div>
-                    <span id="ticker-updated" class="text-[10px] text-slate-500 hidden sm:inline">USD Live</span>
+                    <span id="ticker-updated" class="text-[10px] text-slate-500">USD Live</span>
                 </div>
             </div>
         </div>
