@@ -46,7 +46,8 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-blue-500/30 selection:text-blue-200">
 
-    <header class="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-30">
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-border bg-surface/90 backdrop-blur-md sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded bg-bg border border-border flex items-center justify-center text-blue-400">
@@ -59,17 +60,64 @@
                         <span class="font-bold tracking-tight text-white text-base">CRYPTO WALLETS</span>
                         <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            TRADING & DCA
+                            LIVE
                         </span>
                     </div>
                     <p class="text-xs text-slate-400 hidden sm:block">Lucas, Raphael & Matteo</p>
                 </div>
             </div>
 
-            <div class="flex items-center gap-1 bg-bg p-1 rounded-lg border border-border text-xs">
-                <button onclick="setTimeframe('daily')" id="tf-daily" class="tf-btn px-3 py-1.5 rounded-md bg-blue-600 text-white font-medium transition">Daily</button>
-                <button onclick="setTimeframe('weekly')" id="tf-weekly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Weekly</button>
-                <button onclick="setTimeframe('monthly')" id="tf-monthly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Monthly</button>
+            <div class="flex items-center gap-3">
+                <div id="header-team-total" class="hidden md:flex items-center gap-2 bg-bg border border-border rounded-lg px-3 py-1.5 text-xs mono">
+                    <span class="text-slate-400">Cumul Équipe :</span>
+                    <strong class="text-white">0,00 €</strong>
+                </div>
+
+                <div class="flex items-center gap-1 bg-bg p-1 rounded-lg border border-border text-xs">
+                    <button onclick="setTimeframe('daily')" id="tf-daily" class="tf-btn px-3 py-1.5 rounded-md bg-blue-600 text-white font-medium transition">Daily</button>
+                    <button onclick="setTimeframe('weekly')" id="tf-weekly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Weekly</button>
+                    <button onclick="setTimeframe('monthly')" id="tf-monthly" class="tf-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white transition">Monthly</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Market Ticker Bar (BTC, ETH, SOL in USD + Fear & Greed) -->
+        <div class="border-t border-border/80 bg-bg/95">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 text-xs mono">
+                <div class="flex flex-wrap items-center gap-4 sm:gap-6">
+                    <!-- BTC -->
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span class="font-semibold text-slate-300">BTC</span>
+                        <span id="price-BTC" class="text-white font-bold">Chargement...</span>
+                        <span id="change-BTC" class="text-[11px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--%</span>
+                    </div>
+
+                    <!-- ETH -->
+                    <div class="flex items-center gap-2 border-l border-border pl-4 sm:pl-6">
+                        <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                        <span class="font-semibold text-slate-300">ETH</span>
+                        <span id="price-ETH" class="text-white font-bold">Chargement...</span>
+                        <span id="change-ETH" class="text-[11px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--%</span>
+                    </div>
+
+                    <!-- SOL -->
+                    <div class="flex items-center gap-2 border-l border-border pl-4 sm:pl-6">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span class="font-semibold text-slate-300">SOL</span>
+                        <span id="price-SOL" class="text-white font-bold">Chargement...</span>
+                        <span id="change-SOL" class="text-[11px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">--%</span>
+                    </div>
+                </div>
+
+                <!-- Sentiment Marché (Fear & Greed) + Status -->
+                <div class="flex items-center gap-3">
+                    <div id="fng-badge" class="flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded bg-surface border border-border text-slate-400">
+                        <span>Sentiment :</span>
+                        <strong id="fng-value" class="text-slate-200">--</strong>
+                    </div>
+                    <span id="ticker-updated" class="text-[10px] text-slate-500 hidden sm:inline">USD Live</span>
+                </div>
             </div>
         </div>
     </header>
@@ -109,7 +157,7 @@
     </main>
 
     <footer class="border-t border-border py-4 px-4 sm:px-6 text-center text-xs text-slate-500">
-        Lucas, Raphael & Matteo
+        Lucas, Raphael & Matteo • Prix temps réel USD (Binance / CoinGecko)
     </footer>
 
     <!-- Anti-cache automatique -->

@@ -9,11 +9,94 @@ function formatEUR(val) {
     }).format(val);
 }
 
+function formatUSD(val) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(val);
+}
+
 function formatSignedEUR(val) {
     const formatted = formatEUR(Math.abs(val));
     return val >= 0 ? `+${formatted}` : `-${formatted}`;
 }
 
+// =========================================================================
+// PRIX TEMPS RÉEL (BTC, ETH, SOL EN USD) + FEAR & GREED INDEX
+// =========================================================================
+function updateTickerUI(symbol, price, change24h) {
+    const priceEl = document.getElementById(`price-${symbol}`);
+    const changeEl = document.getElementById(`change-${symbol}`);
+    if (!priceEl || !changeEl) return;
+
+    priceEl.textContent = formatUSD(price);
+    const isPos = change24h >= 0;
+    changeEl.textContent = `${isPos ? '+' : ''}${change24h.toFixed(2)}%`;
+    changeEl.className = `text-[11px] px-1.5 py-0.2 rounded font-medium ${
+        isPos
+            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+            : 'bg-red-500/15 text-red-400 border border-red-500/20'
+    }`;
+}
+
+async function fetchCryptoPrices() {
+    try {
+        // Source principale : Binance Public REST API (temps réel sans clé API)
+        const symbols = encodeURIComponent('["BTCUSDT","ETHUSDT","SOLUSDT"]');
+        const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${symbols}`);
+        if (!res.ok) throw new Error('Binance API error');
+        const data = await res.json();
+
+        const map = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL' };
+        data.forEach(item => {
+            const sym = map[item.symbol];
+            if (sym) {
+                updateTickerUI(sym, parseFloat(item.lastPrice), parseFloat(item.priceChangePercent));
+            }
+        });
+
+        const upd = document.getElementById('ticker-updated');
+        if (upd) {
+            const now = new Date();
+            upd.textContent = `USD • ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+        }
+    } catch (e) {
+        // Fallback automatique : CoinGecko
+        try {
+            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
+            const data = await res.json();
+            if (data.bitcoin) updateTickerUI('BTC', data.bitcoin.usd, data.bitcoin.usd_24h_change);
+            if (data.ethereum) updateTickerUI('ETH', data.ethereum.usd, data.ethereum.usd_24h_change);
+            if (data.solana) updateTickerUI('SOL', data.solana.usd, data.solana.usd_24h_change);
+        } catch (err) {
+            console.warn('Impossible de récupérer les prix crypto en direct', err);
+        }
+    }
+}
+
+async function fetchFearAndGreed() {
+    try {
+        const res = await fetch('https://api.alternative.me/fng/?limit=1');
+        const data = await res.json();
+        if (data && data.data && data.data[0]) {
+            const val = parseInt(data.data[0].value, 10);
+            const label = data.data[0].value_classification;
+            const el = document.getElementById('fng-value');
+            if (el) {
+                el.textContent = `${val}/100 (${label})`;
+                el.className = val >= 60 ? 'text-emerald-400' : val <= 35 ? 'text-red-400' : 'text-amber-400';
+            }
+        }
+    } catch (e) {
+        // Ignorer si indisponible
+    }
+}
+
+// =========================================================================
+// CALCULS DES PÉRIODES & STATISTIQUES
+// =========================================================================
 function getISOWeekKey(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
     const date = new Date(Date.UTC(y, m - 1, d));
@@ -44,14 +127,31 @@ function formatPeriodLabel(key, tf) {
 }
 
 function getWalletTotals(wallet) {
-    if (!wallet) return { initial: 0, deposits: 0, invested: 0, pnl: 0, current: 0, roi: 0 };
+    if (!wallet) return { initial: 0, deposits: 0, invested: 0, pnl: 0, current: 0, roi: 0, bestDay: 0, maxDrawdown: 0 };
     const initial = Number(wallet.initialCapital || 0);
     const deposits = (wallet.deposits || []).reduce((s, d) => s + Number(d.amount), 0);
-    const pnl = (wallet.dailyPnL || []).reduce((s, d) => s + Number(d.pnl), 0);
+    const entries = wallet.dailyPnL || [];
+    const pnl = entries.reduce((s, d) => s + Number(d.pnl), 0);
     const invested = initial + deposits;
     const current = invested + pnl;
     const roi = invested > 0 ? (pnl / invested) * 100 : 0;
-    return { initial, deposits, invested, pnl, current, roi };
+
+    // Meilleur jour & pire drawdown cumulé
+    let bestDay = 0;
+    let peak = 0;
+    let cumPnL = 0;
+    let maxDrawdown = 0;
+
+    [...entries].sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
+        const v = Number(e.pnl);
+        if (v > bestDay) bestDay = v;
+        cumPnL += v;
+        if (cumPnL > peak) peak = cumPnL;
+        const dd = peak - cumPnL;
+        if (dd > maxDrawdown) maxDrawdown = dd;
+    });
+
+    return { initial, deposits, invested, pnl, current, roi, bestDay, maxDrawdown };
 }
 
 function aggregateWalletPeriods(wallet, tf) {
@@ -168,6 +268,8 @@ function renderGlobalIndividualWallets() {
     if (!container) return;
     const names = Object.keys(WALLETS_CONFIG);
 
+    let grandTeamTotal = 0;
+
     container.innerHTML = names.map(name => {
         const g = (typeof GLOBAL_GOALS_CONFIG !== 'undefined' && GLOBAL_GOALS_CONFIG[name]) || {
             targetCapital: 100000,
@@ -182,6 +284,8 @@ function renderGlobalIndividualWallets() {
         const dcaStats = getWalletTotals(dcaWallet);
 
         const combinedCapital = tradingStats.current + dcaStats.current;
+        grandTeamTotal += combinedCapital;
+
         const combinedInvested = tradingStats.invested + dcaStats.invested;
         const combinedPnL = tradingStats.pnl + dcaStats.pnl;
         const combinedROI = combinedInvested > 0 ? (combinedPnL / combinedInvested) * 100 : 0;
@@ -257,6 +361,11 @@ function renderGlobalIndividualWallets() {
         </section>
         `;
     }).join('');
+
+    const headerTotalEl = document.getElementById('header-team-total');
+    if (headerTotalEl) {
+        headerTotalEl.innerHTML = `<span class="text-slate-400">Cumul Équipe :</span><strong class="text-white">${formatEUR(grandTeamTotal)}</strong>`;
+    }
 }
 
 // =========================================================================
@@ -348,6 +457,18 @@ function renderTradingWallets(periodLabels, recapTitles) {
                 </div>
             </div>
 
+            <!-- Métriques Risque : Meilleure journée & Max Drawdown -->
+            <div class="grid grid-cols-2 gap-3 text-[11px] mono">
+                <div class="bg-bg/70 border border-border rounded-lg px-3 py-2 flex items-center justify-between">
+                    <span class="text-slate-400">Record :</span>
+                    <strong class="text-emerald-400">${formatSignedEUR(stats.bestDay)}</strong>
+                </div>
+                <div class="bg-bg/70 border border-border rounded-lg px-3 py-2 flex items-center justify-between">
+                    <span class="text-slate-400">Max DD :</span>
+                    <strong class="${stats.maxDrawdown > 0 ? 'text-red-400' : 'text-slate-300'}">-${formatEUR(stats.maxDrawdown)}</strong>
+                </div>
+            </div>
+
             <!-- Dernière Période -->
             <div class="bg-bg/70 border border-border rounded-lg px-3.5 py-2.5 flex items-center justify-between">
                 <div>
@@ -419,9 +540,8 @@ function renderTradingWallets(periodLabels, recapTitles) {
 function computeDCAForecast(w, currentCapital) {
     const rate = Number(w.monthlyRate || 0.60);
     const monthsCount = Number(w.forecastMonths || 6);
-    const monthlyAddedDeposit = Number(w.biweeklyDeposit || 0) * 2; // 1k toutes les 2 semaines = 2k / mois
+    const monthlyAddedDeposit = Number(w.biweeklyDeposit || 0) * 2;
 
-    // Si en attente de 1k, la projection démarre sur la base de ces 1 000 € attendus
     let simCap = currentCapital > 0 ? currentCapital : Number(w.pendingAmount || w.initialCapital || 0);
     const startCap = simCap;
 
@@ -503,7 +623,7 @@ function renderDCAWallets(periodLabels, recapTitles) {
                 </div>
             </div>
 
-            <!-- Encart Prochain Dépôt DCA (1K toutes les 2 semaines) -->
+            <!-- Encart Prochain Dépôt DCA -->
             <div class="bg-bg border border-border rounded-lg px-3.5 py-2.5 flex items-center gap-2.5">
                 <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -623,12 +743,10 @@ function renderDCAWallets(periodLabels, recapTitles) {
         const periods = aggregateWalletPeriods(w, currentTimeframe);
         const stats = getWalletTotals(w);
 
-        // 1. Graphe réel DCA
         const realLabels = ['Départ', ...periods.map(p => p.label)];
         const realData = [Number(w.initialCapital || 0), ...periods.map(p => p.capitalAfter)];
         createLineChart(`dca-chart-${name}`, realLabels, realData, w.accentHex, w.accentBg, false);
 
-        // 2. Graphe Prévision Attendue
         const { startCap, steps } = computeDCAForecast(w, stats.current);
         const forecastLabels = [w.status === 'EN ATTENTE' ? 'Dépôt 1k' : 'Actuel', ...steps.map(s => s.label)];
         const forecastData = [Number(startCap.toFixed(2)), ...steps.map(s => s.capital)];
@@ -662,4 +780,8 @@ function renderAll() {
     renderDCAWallets(periodLabels, recapTitles);
 }
 
+// Init dashboard + live tickers (rafraîchi toutes les 10s)
 renderAll();
+fetchCryptoPrices();
+fetchFearAndGreed();
+setInterval(fetchCryptoPrices, 10000);
