@@ -43,7 +43,6 @@ function updateTickerUI(symbol, price, change24h) {
 
 async function fetchCryptoPrices() {
     try {
-        // Source principale : Binance Public REST API (temps réel sans clé API)
         const symbols = encodeURIComponent('["BTCUSDT","ETHUSDT","SOLUSDT"]');
         const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${symbols}`);
         if (!res.ok) throw new Error('Binance API error');
@@ -63,7 +62,6 @@ async function fetchCryptoPrices() {
             upd.textContent = `USD • ${now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
         }
     } catch (e) {
-        // Fallback automatique : CoinGecko
         try {
             const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
             const data = await res.json();
@@ -95,7 +93,7 @@ async function fetchFearAndGreed() {
 }
 
 // =========================================================================
-// CALCULS DES PÉRIODES & STATISTIQUES
+// CALCULS DES PÉRIODES & STATISTIQUES (DÉPÔTS + RETRAITS + PNL)
 // =========================================================================
 function getISOWeekKey(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -127,16 +125,20 @@ function formatPeriodLabel(key, tf) {
 }
 
 function getWalletTotals(wallet) {
-    if (!wallet) return { initial: 0, deposits: 0, invested: 0, pnl: 0, current: 0, roi: 0, bestDay: 0, maxDrawdown: 0 };
+    if (!wallet) {
+        return { initial: 0, deposits: 0, withdrawals: 0, invested: 0, netCapitalBase: 0, pnl: 0, current: 0, roi: 0, bestDay: 0, maxDrawdown: 0 };
+    }
     const initial = Number(wallet.initialCapital || 0);
     const deposits = (wallet.deposits || []).reduce((s, d) => s + Number(d.amount), 0);
+    const withdrawals = (wallet.withdrawals || []).reduce((s, w) => s + Number(w.amount), 0);
     const entries = wallet.dailyPnL || [];
     const pnl = entries.reduce((s, d) => s + Number(d.pnl), 0);
+
     const invested = initial + deposits;
-    const current = invested + pnl;
+    const netCapitalBase = invested - withdrawals;
+    const current = Math.max(0, netCapitalBase + pnl);
     const roi = invested > 0 ? (pnl / invested) * 100 : 0;
 
-    // Meilleur jour & pire drawdown cumulé
     let bestDay = 0;
     let peak = 0;
     let cumPnL = 0;
@@ -151,7 +153,7 @@ function getWalletTotals(wallet) {
         if (dd > maxDrawdown) maxDrawdown = dd;
     });
 
-    return { initial, deposits, invested, pnl, current, roi, bestDay, maxDrawdown };
+    return { initial, deposits, withdrawals, invested, netCapitalBase, pnl, current, roi, bestDay, maxDrawdown };
 }
 
 function aggregateWalletPeriods(wallet, tf) {
@@ -159,14 +161,20 @@ function aggregateWalletPeriods(wallet, tf) {
 
     (wallet.dailyPnL || []).forEach(item => {
         const key = getPeriodKey(item.date, tf);
-        if (!map[key]) map[key] = { pnl: 0, deposit: 0 };
+        if (!map[key]) map[key] = { pnl: 0, deposit: 0, withdrawal: 0 };
         map[key].pnl += Number(item.pnl);
     });
 
     (wallet.deposits || []).forEach(item => {
         const key = getPeriodKey(item.date, tf);
-        if (!map[key]) map[key] = { pnl: 0, deposit: 0 };
+        if (!map[key]) map[key] = { pnl: 0, deposit: 0, withdrawal: 0 };
         map[key].deposit += Number(item.amount);
+    });
+
+    (wallet.withdrawals || []).forEach(item => {
+        const key = getPeriodKey(item.date, tf);
+        if (!map[key]) map[key] = { pnl: 0, deposit: 0, withdrawal: 0 };
+        map[key].withdrawal += Number(item.amount);
     });
 
     const sortedKeys = Object.keys(map).sort();
@@ -175,12 +183,14 @@ function aggregateWalletPeriods(wallet, tf) {
     return sortedKeys.map(k => {
         const periodPnL = map[k].pnl;
         const periodDeposit = map[k].deposit;
-        runningCapital += periodPnL + periodDeposit;
+        const periodWithdrawal = map[k].withdrawal;
+        runningCapital += periodPnL + periodDeposit - periodWithdrawal;
         return {
             key: k,
             label: formatPeriodLabel(k, tf),
             pnl: Number(periodPnL.toFixed(2)),
             deposit: Number(periodDeposit.toFixed(2)),
+            withdrawal: Number(periodWithdrawal.toFixed(2)),
             capitalAfter: Number(runningCapital.toFixed(2))
         };
     });
@@ -260,6 +270,35 @@ function createLineChart(canvasId, labels, dataPoints, borderColor, bgColor, isD
     });
 }
 
+function renderPeriodHistoryRows(reversedPeriods, emptyText) {
+    if (reversedPeriods.length === 0) {
+        return `<div class="text-xs text-slate-500 text-center py-4">${emptyText}</div>`;
+    }
+
+    return reversedPeriods.map(p => {
+        const hasCashFlowOnly = p.pnl === 0 && (p.deposit > 0 || p.withdrawal > 0);
+        return `
+        <div class="flex items-center justify-between bg-bg border border-border/80 rounded px-3 py-2 text-xs mono gap-2">
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-slate-400">${p.label}</span>
+                ${p.deposit > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">+${p.deposit.toFixed(0)}€ dép.</span>` : ''}
+                ${p.withdrawal > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">-${p.withdrawal.toFixed(0)}€ ret.</span>` : ''}
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                ${!hasCashFlowOnly ? `
+                    <span class="${p.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'} font-semibold">
+                        ${formatSignedEUR(p.pnl)}
+                    </span>
+                ` : ''}
+                <span class="text-slate-300 text-[11px] ${!hasCashFlowOnly ? 'border-l border-border pl-3' : ''}">
+                    ${formatEUR(p.capitalAfter)}
+                </span>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
 // =========================================================================
 // SECTION 0 : PORTEFEUILLE TOTAL PAR PERSONNE (TRADING + DCA)
 // =========================================================================
@@ -287,6 +326,7 @@ function renderGlobalIndividualWallets() {
         grandTeamTotal += combinedCapital;
 
         const combinedInvested = tradingStats.invested + dcaStats.invested;
+        const combinedWithdrawals = tradingStats.withdrawals + dcaStats.withdrawals;
         const combinedPnL = tradingStats.pnl + dcaStats.pnl;
         const combinedROI = combinedInvested > 0 ? (combinedPnL / combinedInvested) * 100 : 0;
 
@@ -311,7 +351,10 @@ function renderGlobalIndividualWallets() {
                 <div class="bg-bg border border-border rounded-lg p-3.5">
                     <div class="text-[11px] text-slate-400 mb-1">Capital Total</div>
                     <div class="text-xl font-bold text-white mono">${formatEUR(combinedCapital)}</div>
-                    <div class="text-[11px] text-slate-500 mono mt-0.5">Déposé : ${formatEUR(combinedInvested)}</div>
+                    <div class="text-[11px] text-slate-500 mono mt-0.5">
+                        Déposé : ${formatEUR(combinedInvested)}
+                        ${combinedWithdrawals > 0 ? `<span class="text-orange-400/90"> • Retiré : ${formatEUR(combinedWithdrawals)}</span>` : ''}
+                    </div>
                 </div>
 
                 <div class="bg-bg border border-border rounded-lg p-3.5">
@@ -446,6 +489,7 @@ function renderTradingWallets(periodLabels, recapTitles) {
                     <div class="text-[11px] text-slate-500 mono mt-0.5">
                         ${stats.deposits > 0 ? `Déposé : ${formatEUR(stats.invested)}` : `Départ : ${formatEUR(stats.initial)}`}
                     </div>
+                    ${stats.withdrawals > 0 ? `<div class="text-[11px] text-orange-400/90 mono mt-0.5">Retiré : -${formatEUR(stats.withdrawals)}</div>` : ''}
                 </div>
 
                 <div class="bg-bg border border-border rounded-lg p-3.5">
@@ -498,27 +542,7 @@ function renderTradingWallets(periodLabels, recapTitles) {
                     <span class="font-mono text-[11px] text-slate-500">${periods.length} entrées</span>
                 </div>
                 <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    ${reversedPeriods.length === 0
-                        ? `<div class="text-xs text-slate-500 text-center py-4">Aucune donnée</div>`
-                        : reversedPeriods.map(p => `
-                            <div class="flex items-center justify-between bg-bg border border-border/80 rounded px-3 py-2 text-xs mono">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-slate-400">${p.label}</span>
-                                    ${p.deposit > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">+${p.deposit.toFixed(0)}€ dép.</span>` : ''}
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    ${p.pnl !== 0 || p.deposit === 0 ? `
-                                        <span class="${p.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'} font-semibold">
-                                            ${formatSignedEUR(p.pnl)}
-                                        </span>
-                                    ` : ''}
-                                    <span class="text-slate-300 text-[11px] ${p.pnl !== 0 || p.deposit === 0 ? 'border-l border-border pl-3' : ''}">
-                                        ${formatEUR(p.capitalAfter)}
-                                    </span>
-                                </div>
-                            </div>
-                        `).join('')
-                    }
+                    ${renderPeriodHistoryRows(reversedPeriods, 'Aucune donnée')}
                 </div>
             </div>
         </section>
@@ -639,7 +663,8 @@ function renderDCAWallets(periodLabels, recapTitles) {
                         ? `<div class="text-base font-bold text-amber-400 mono py-0.5">${w.statusText || 'En attente de 1 000 €'}</div>
                            <div class="text-[11px] text-slate-500 mono mt-0.5">Actuel : 0,00 €</div>`
                         : `<div class="text-xl font-bold text-white mono">${formatEUR(stats.current)}</div>
-                           <div class="text-[11px] text-slate-500 mono mt-0.5">Déposé : ${formatEUR(stats.invested)}</div>`
+                           <div class="text-[11px] text-slate-500 mono mt-0.5">Déposé : ${formatEUR(stats.invested)}</div>
+                           ${stats.withdrawals > 0 ? `<div class="text-[11px] text-orange-400/90 mono mt-0.5">Retiré : -${formatEUR(stats.withdrawals)}</div>` : ''}`
                     }
                 </div>
 
@@ -711,27 +736,7 @@ function renderDCAWallets(periodLabels, recapTitles) {
                     <span class="font-mono text-[11px] text-slate-500">${periods.length} entrées</span>
                 </div>
                 <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                    ${reversedPeriods.length === 0
-                        ? `<div class="text-xs text-slate-500 text-center py-4">${isPending ? 'En attente du dépôt initial de 1 000 €' : 'Aucune donnée'}</div>`
-                        : reversedPeriods.map(p => `
-                            <div class="flex items-center justify-between bg-bg border border-border/80 rounded px-3 py-2 text-xs mono">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-slate-400">${p.label}</span>
-                                    ${p.deposit > 0 ? `<span class="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">+${p.deposit.toFixed(0)}€ dép.</span>` : ''}
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    ${p.pnl !== 0 || p.deposit === 0 ? `
-                                        <span class="${p.pnl >= 0 ? 'text-emerald-400' : 'text-red-400'} font-semibold">
-                                            ${formatSignedEUR(p.pnl)}
-                                        </span>
-                                    ` : ''}
-                                    <span class="text-slate-300 text-[11px] ${p.pnl !== 0 || p.deposit === 0 ? 'border-l border-border pl-3' : ''}">
-                                        ${formatEUR(p.capitalAfter)}
-                                    </span>
-                                </div>
-                            </div>
-                        `).join('')
-                    }
+                    ${renderPeriodHistoryRows(reversedPeriods, isPending ? 'En attente du dépôt initial de 1 000 €' : 'Aucune donnée')}
                 </div>
             </div>
         </section>
@@ -780,7 +785,6 @@ function renderAll() {
     renderDCAWallets(periodLabels, recapTitles);
 }
 
-// Init dashboard + live tickers (rafraîchi toutes les 10s)
 renderAll();
 fetchCryptoPrices();
 fetchFearAndGreed();
