@@ -44,7 +44,7 @@ const WALLETS_CONFIG = {
             { date: '2026-11-17', amount: 50000.00 },
             { date: '2026-11-18', amount: 10350.00 }
         ],
-        // Ajoute tes retraits ici : { date: 'AAAA-MM-JJ', amount: 1000.00 }
+        // Exemple pour ajouter un retrait : { date: '2026-11-20', amount: 2000.00 }
         withdrawals: [],
         dailyPnL: [
             { date: '2026-10-28', pnl: 1310.20 },
@@ -54,7 +54,7 @@ const WALLETS_CONFIG = {
             { date: '2026-11-17', pnl: 14613.29 },
             { date: '2026-11-18', pnl: -1613.29 },
             { date: '2026-11-19', pnl: 709.98 },
-            { date: '2026-11-20', pnl: 130.52 }
+            { date: '2026-11-20', pnl: 830.42 }
         ]
     },
     Raphael: {
@@ -81,7 +81,7 @@ const WALLETS_CONFIG = {
             { date: '2026-11-17', pnl: 97.32 },
             { date: '2026-11-18', pnl: -32.53 },
             { date: '2026-11-19', pnl: 46.38 },
-            { date: '2026-11-20', pnl: 11.66 }
+            { date: '2026-11-20', pnl: 31.23 }
         ]
     },
     Matteo: {
@@ -110,7 +110,7 @@ const WALLETS_CONFIG = {
             { date: '2026-11-17', pnl: 51.33 },
             { date: '2026-11-18', pnl: -31.33 },
             { date: '2026-11-19', pnl: 43.91 },
-            { date: '2026-11-20', pnl: 11.21 }
+            { date: '2026-11-20', pnl: 29.11 }
         ]
     }
 };
@@ -121,13 +121,13 @@ const WALLETS_CONFIG = {
 const DCA_WALLETS_CONFIG = {
     Lucas: {
         status: 'ACTIF',
-        initialCapital: 10000, // 10k de dépôt initial
+        initialCapital: 10000,
         pendingAmount: 0,
-        targetCapital: 100000, // Objectif 100k fin d'année 2027
+        targetCapital: 100000,
         targetNote: 'Objectif fin d\'année 2027',
         nextDeposit: 'Dépôt de 1 000 € toutes les 2 semaines',
-        biweeklyDeposit: 1000, // +1 000 € toutes les 2 semaines (+2 000 €/mois)
-        monthlyRate: 0.60, // +60% par mois
+        biweeklyDeposit: 1000,
+        monthlyRate: 0.60,
         forecastMonths: 6,
         accentHex: '#f59e0b',
         accentBg: 'rgba(245, 158, 11, 0.10)',
@@ -142,7 +142,7 @@ const DCA_WALLETS_CONFIG = {
         status: 'EN ATTENTE',
         statusText: 'En attente de 1 000 €',
         initialCapital: 0,
-        pendingAmount: 1000, // Base de calcul pour la prévision une fois les 1k déposés
+        pendingAmount: 1000,
         targetCapital: 100000,
         targetNote: 'Objectif fin d\'année 2027',
         nextDeposit: 'Dépôt de 1 000 € toutes les 2 semaines',
