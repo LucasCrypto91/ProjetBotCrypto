@@ -44,6 +44,8 @@ const WALLETS_CONFIG = {
             { date: '2026-11-17', amount: 50000.00 },
             { date: '2026-11-18', amount: 10350.00 }
         ],
+        // Ajoute tes retraits ici : { date: 'AAAA-MM-JJ', amount: 1000.00 }
+        withdrawals: [],
         dailyPnL: [
             { date: '2026-10-28', pnl: 1310.20 },
             { date: '2026-11-03', pnl: 4220.41 },
@@ -70,6 +72,7 @@ const WALLETS_CONFIG = {
             { date: '2026-11-16', amount: 550.00 },
             { date: '2026-11-17', amount: 575.00 }
         ],
+        withdrawals: [],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
             { date: '2026-11-14', pnl: 18.58 },
@@ -95,6 +98,9 @@ const WALLETS_CONFIG = {
         deposits: [
             { date: '2026-11-16', amount: 550.00 },
             { date: '2026-11-18', amount: 575.00 }
+        ],
+        withdrawals: [
+            { date: '2026-11-20', amount: 27.00 }
         ],
         dailyPnL: [
             { date: '2026-11-13', pnl: 17.32 },
@@ -127,6 +133,7 @@ const DCA_WALLETS_CONFIG = {
         accentBg: 'rgba(245, 158, 11, 0.10)',
         dotClass: 'bg-amber-400',
         deposits: [],
+        withdrawals: [],
         dailyPnL: [
             { date: '2026-11-19', pnl: 0.00 }
         ]
@@ -146,6 +153,7 @@ const DCA_WALLETS_CONFIG = {
         accentBg: 'rgba(59, 130, 246, 0.10)',
         dotClass: 'bg-blue-400',
         deposits: [],
+        withdrawals: [],
         dailyPnL: []
     },
     Matteo: {
@@ -163,6 +171,7 @@ const DCA_WALLETS_CONFIG = {
         accentBg: 'rgba(16, 185, 129, 0.10)',
         dotClass: 'bg-emerald-400',
         deposits: [],
+        withdrawals: [],
         dailyPnL: []
     }
 };
